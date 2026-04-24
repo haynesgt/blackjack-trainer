@@ -30,11 +30,17 @@ APP_HTML = r"""<!doctype html>
       box-sizing: border-box;
     }
 
+    html,
+    body {
+      height: 100%;
+    }
+
     body {
       margin: 0;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--ink);
       background: #f5f7f6;
+      overflow: hidden;
     }
 
     button, select {
@@ -42,13 +48,14 @@ APP_HTML = r"""<!doctype html>
     }
 
     .app {
-      min-height: 100vh;
+      height: 100vh;
       display: grid;
       grid-template-columns: minmax(0, 1fr) 370px;
+      overflow: hidden;
     }
 
     .table {
-      min-height: 100vh;
+      height: 100vh;
       padding: 28px;
       background:
         radial-gradient(circle at 22% 18%, rgba(255,255,255,0.14), transparent 28%),
@@ -58,6 +65,8 @@ APP_HTML = r"""<!doctype html>
       display: flex;
       flex-direction: column;
       gap: 22px;
+      overflow-y: auto;
+      min-width: 0;
     }
 
     .topbar {
@@ -379,9 +388,10 @@ APP_HTML = r"""<!doctype html>
     .sidebar {
       border-left: 1px solid var(--line);
       background: var(--panel);
-      min-height: 100vh;
+      height: 100vh;
       padding: 22px;
-      overflow: auto;
+      overflow-y: auto;
+      min-width: 0;
     }
 
     .chart {
@@ -479,14 +489,67 @@ APP_HTML = r"""<!doctype html>
       line-height: 1.45;
     }
 
+    .rules-panel {
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    .rules-panel h2 {
+      margin: 0 0 10px;
+      font-size: 21px;
+    }
+
+    .rules-list {
+      display: grid;
+      gap: 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .rules-list strong {
+      display: block;
+      color: var(--ink);
+      font-weight: 900;
+      margin-bottom: 2px;
+    }
+
+    .rules-settings {
+      margin-top: 16px;
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
     @media (max-width: 1120px) {
+      body {
+        overflow: auto;
+      }
+
       .app {
         grid-template-columns: 1fr;
+        height: auto;
+        min-height: 100vh;
+        overflow: visible;
+      }
+
+      .table {
+        height: auto;
+        min-height: 100vh;
+        overflow: visible;
       }
 
       .sidebar {
+        height: auto;
         min-height: auto;
         border-left: 0;
+        overflow: visible;
       }
     }
 
@@ -621,6 +684,16 @@ APP_HTML = r"""<!doctype html>
           </section>
 
           <section class="tool-panel">
+            <h2>Action Guide</h2>
+            <ul class="hint-list">
+              <li><strong>Hit:</strong> take one more card.</li>
+              <li><strong>Stand:</strong> stop taking cards and keep this total.</li>
+              <li><strong>Double:</strong> double the bet, take exactly one more card, then stop.</li>
+              <li><strong>Split:</strong> if your first two cards have the same value, separate them into two hands.</li>
+            </ul>
+          </section>
+
+          <section class="tool-panel">
             <h2>Fast Rules</h2>
             <ul class="hint-list">
               <li><strong>Ace rule:</strong> start by counting an ace as 11. If that would make the hand over 21, count that ace as 1 instead.</li>
@@ -645,6 +718,22 @@ APP_HTML = r"""<!doctype html>
         <span><i class="swatch D"></i> D double</span>
         <span><i class="swatch P"></i> Sp split</span>
       </div>
+      <section class="rules-panel" aria-label="Game rules">
+        <h2>Game Rules</h2>
+        <ul class="rules-list">
+          <li><strong>Goal</strong> Beat the dealer by ending with a higher hand total than the dealer without going over 21.</li>
+          <li><strong>Card values</strong> Number cards count as shown. J, Q, and K count as 10. An ace counts as 11 unless that would put the hand over 21, then it counts as 1.</li>
+          <li><strong>Blackjack</strong> Your first two cards are an ace plus any 10-value card. This is the best starting hand.</li>
+          <li><strong>Bust</strong> If your total goes over 21, you lose immediately.</li>
+          <li><strong>Hit</strong> Take one more card. You can keep hitting until you stand or bust.</li>
+          <li><strong>Stand</strong> Stop taking cards. Your current total is the total you will compare against the dealer.</li>
+          <li><strong>Double</strong> Double the bet, take exactly one more card, then your turn ends. Basic strategy uses this when one-card improvement is valuable.</li>
+          <li><strong>Split</strong> If your first two cards have the same value, separate them into two hands. Each card starts a new hand with its own next card.</li>
+          <li><strong>Dealer turn</strong> After players finish, the dealer draws by fixed rules. In this trainer, the dealer stands on soft 17.</li>
+          <li><strong>Why strategy charts work</strong> You only need your hand type and the dealer upcard. The chart tells the best long-run play for that situation.</li>
+        </ul>
+        <p class="rules-settings"><strong>Trainer settings:</strong> 6 decks, dealer stands on soft 17, double after split allowed, surrender not included. In the charts, dealer 10 means 10, J, Q, or K.</p>
+      </section>
     </aside>
   </main>
 
@@ -652,8 +741,10 @@ APP_HTML = r"""<!doctype html>
     const dealerValues = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
     const dealerLabels = { 11: "A" };
     const suits = ["♠", "♥", "♦", "♣"];
+    const drillModes = ["mixed", "hard", "soft", "pair", "weak"];
+    const savedMode = localStorage.getItem("blackjackTrainerMode");
     const state = {
-      mode: "mixed",
+      mode: drillModes.includes(savedMode) ? savedMode : "mixed",
       hand: null,
       answered: false,
       stats: JSON.parse(localStorage.getItem("blackjackTrainerStats") || '{"correct":0,"missed":0,"streak":0}'),
@@ -887,6 +978,12 @@ APP_HTML = r"""<!doctype html>
       document.getElementById("streak").textContent = state.stats.streak;
     }
 
+    function updateModeButtons() {
+      document.querySelectorAll(".mode").forEach(item => {
+        item.classList.toggle("active", item.dataset.mode === state.mode);
+      });
+    }
+
     function nextHand() {
       state.hand = newHandFromMode(state.mode);
       state.answered = false;
@@ -929,7 +1026,7 @@ APP_HTML = r"""<!doctype html>
       };
       const rows = {
         hard: [17,16,15,14,13,12,11,10,9,8],
-        soft: [20,19,18,17,16,15,14,13],
+        soft: [21,20,19,18,17,16,15,14,13],
         pair: [11,10,9,8,7,6,5,4,3,2]
       }[kind];
       const body = rows.map(row => {
@@ -940,7 +1037,7 @@ APP_HTML = r"""<!doctype html>
           if (kind === "pair") move = pairMove(row, dealer);
           return `<td class="${move}">${chartMoveLabel(move)}</td>`;
         }).join("");
-        const rowLabel = kind === "soft" ? `A,${row - 11}` : kind === "pair" ? `${label(row)},${label(row)}` : row;
+        const rowLabel = kind === "soft" ? `A,${row - 11}` : kind === "pair" ? `${label(row)},${label(row)}` : row === 17 ? "≥17" : row === 8 ? "≤8" : row;
         return `<tr><th>${rowLabel}</th>${cells}</tr>`;
       }).join("");
       return `<h2>${titles[kind][0]}</h2><p>${titles[kind][1]}</p>
@@ -967,7 +1064,8 @@ APP_HTML = r"""<!doctype html>
         const button = event.target.closest("button[data-mode]");
         if (!button) return;
         state.mode = button.dataset.mode;
-        document.querySelectorAll(".mode").forEach(item => item.classList.toggle("active", item === button));
+        localStorage.setItem("blackjackTrainerMode", state.mode);
+        updateModeButtons();
         nextHand();
       });
       window.addEventListener("keydown", event => {
@@ -984,6 +1082,7 @@ APP_HTML = r"""<!doctype html>
     document.getElementById("chart-soft").innerHTML = buildChart("soft");
     document.getElementById("chart-pair").innerHTML = buildChart("pair");
     bind();
+    updateModeButtons();
     updateScore();
     nextHand();
   </script>
