@@ -643,10 +643,10 @@ APP_HTML = r"""<!doctype html>
               <span>Use the dealer upcard, your total, and whether your hand is hard, soft, or a pair.</span>
             </div>
             <div class="actions" id="actions">
-              <button class="action" data-action="H">Hit</button>
-              <button class="action" data-action="S">Stand</button>
-              <button class="action" data-action="D">Double</button>
-              <button class="action" data-action="P">Split</button>
+              <button class="action" data-action="H">Hit [1]</button>
+              <button class="action" data-action="S">Stand [2]</button>
+              <button class="action" data-action="D">Double [3]</button>
+              <button class="action" data-action="P">Split [4]</button>
             </div>
             <div class="result" id="result" aria-live="polite">
               <strong>Last hand feedback appears here.</strong>
@@ -696,10 +696,10 @@ APP_HTML = r"""<!doctype html>
           <section class="tool-panel">
             <h2>Action Guide</h2>
             <ul class="hint-list">
-              <li><strong>Hit:</strong> take one more card.</li>
-              <li><strong>Stand:</strong> stop taking cards and keep this total.</li>
-              <li><strong>Double:</strong> on a two-card hand, double the bet, take exactly one more card, then stop.</li>
-              <li><strong>Split:</strong> if your first two cards have the same value, separate them into two hands.</li>
+              <li><strong>1 Hit:</strong> take one more card.</li>
+              <li><strong>2 Stand:</strong> stop taking cards and keep this total.</li>
+              <li><strong>3 Double:</strong> on a two-card hand, double the bet, take exactly one more card, then stop.</li>
+              <li><strong>4 Split:</strong> if your first two cards have the same value, separate them into two hands.</li>
             </ul>
           </section>
 
@@ -1152,7 +1152,7 @@ APP_HTML = r"""<!doctype html>
         nextHand();
       });
       window.addEventListener("keydown", event => {
-        const keyMap = { h: "H", s: "S", d: "D", p: "P" };
+        const keyMap = { h: "H", "1": "H", s: "S", "2": "S", d: "D", "3": "D", p: "P", "4": "P" };
         const move = keyMap[event.key.toLowerCase()];
         if (move) {
           event.preventDefault();

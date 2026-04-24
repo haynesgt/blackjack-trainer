@@ -20,10 +20,10 @@ If your total goes over 21, you bust and lose immediately. After players finish,
 
 Player actions:
 
-- Hit: take one more card.
-- Stand: stop taking cards and keep your current total.
-- Double: on a two-card hand, double the bet, take exactly one more card, then stop.
-- Split: if your first two cards have the same value, separate them into two hands.
+- Hit: take one more card. Shortcut: `1` or `H`.
+- Stand: stop taking cards and keep your current total. Shortcut: `2` or `S`.
+- Double: on a two-card hand, double the bet, take exactly one more card, then stop. Shortcut: `3` or `D`.
+- Split: if your first two cards have the same value, separate them into two hands. Shortcut: `4` or `P`.
 
 ## Drill modes
 
