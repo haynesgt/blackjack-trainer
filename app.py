@@ -252,6 +252,7 @@ APP_HTML = r"""<!doctype html>
       cursor: not-allowed;
     }
 
+    .prompt,
     .result {
       min-height: 112px;
       border-radius: 8px;
@@ -262,6 +263,12 @@ APP_HTML = r"""<!doctype html>
       line-height: 1.45;
     }
 
+    .prompt {
+      min-height: 86px;
+      background: rgba(255,255,255,0.16);
+    }
+
+    .prompt strong,
     .result strong {
       display: block;
       color: #fff;
@@ -631,6 +638,10 @@ APP_HTML = r"""<!doctype html>
           </div>
 
           <div class="decision">
+            <div class="prompt" id="prompt" aria-live="polite">
+              <strong>Choose the best play.</strong>
+              <span>Use the dealer upcard, your total, and whether your hand is hard, soft, or a pair.</span>
+            </div>
             <div class="actions" id="actions">
               <button class="action" data-action="H">Hit</button>
               <button class="action" data-action="S">Stand</button>
@@ -638,8 +649,8 @@ APP_HTML = r"""<!doctype html>
               <button class="action" data-action="P">Split</button>
             </div>
             <div class="result" id="result" aria-live="polite">
-              <strong>Choose the best play.</strong>
-              <span>Use the dealer upcard, your total, and whether your hand is hard, soft, or a pair.</span>
+              <strong>Last hand feedback appears here.</strong>
+              <span>Pick an action to see whether it matched basic strategy.</span>
             </div>
           </div>
         </section>
@@ -745,7 +756,6 @@ APP_HTML = r"""<!doctype html>
     const state = {
       mode: drillModes.includes(savedMode) ? savedMode : "mixed",
       hand: null,
-      nextHandTimer: null,
       answered: false,
       stats: JSON.parse(localStorage.getItem("blackjackTrainerStats") || '{"correct":0,"missed":0,"streak":0}'),
       misses: JSON.parse(localStorage.getItem("blackjackTrainerMisses") || "[]")
@@ -1027,12 +1037,17 @@ APP_HTML = r"""<!doctype html>
       const legalActions = availableActions(hand.player);
       document.querySelectorAll(".action[data-action]").forEach(button => {
         const action = button.dataset.action;
-        button.disabled = state.answered || !legalActions[action];
+        button.disabled = !legalActions[action];
         button.title = legalActions[action] ? "" : `${actionName(action)} is not available for this decision.`;
       });
     }
 
-    function setResult(kind, title, detail) {
+    function setPrompt(title, detail) {
+      const prompt = document.getElementById("prompt");
+      prompt.innerHTML = `<strong>${title}</strong><span>${detail}</span>`;
+    }
+
+    function setFeedback(kind, title, detail) {
       const result = document.getElementById("result");
       result.className = `result ${kind}`;
       result.innerHTML = `<strong>${title}</strong><span>${detail}</span>`;
@@ -1056,14 +1071,10 @@ APP_HTML = r"""<!doctype html>
     }
 
     function nextHand() {
-      if (state.nextHandTimer) {
-        clearTimeout(state.nextHandTimer);
-        state.nextHandTimer = null;
-      }
       state.hand = newHandFromMode(state.mode);
       state.answered = false;
       renderHand();
-      setResult("", "Choose the best play.", `${handSummary(state.hand.player)} vs dealer ${label(state.hand.dealer)}. Read the hand note above, then pick the basic-strategy action.`);
+      setPrompt("Choose the best play.", `${handSummary(state.hand.player)} vs dealer ${label(state.hand.dealer)}. Read the hand note above, then pick the basic-strategy action.`);
     }
 
     function answer(move) {
@@ -1075,7 +1086,7 @@ APP_HTML = r"""<!doctype html>
       if (move === correct) {
         state.stats.correct += 1;
         state.stats.streak += 1;
-        setResult("good", "Correct.", detail);
+        setFeedback("good", "Correct.", detail);
       } else {
         state.stats.missed += 1;
         state.stats.streak = 0;
@@ -1083,12 +1094,11 @@ APP_HTML = r"""<!doctype html>
           dealer: state.hand.dealer,
           player: state.hand.player.map(card => ({ value: card.value }))
         });
-        setResult("bad", `Best play: ${actionName(correct)}.`, `You chose ${actionName(move)}. ${detail}`);
+        setFeedback("bad", `Best play: ${actionName(correct)}.`, `You chose ${actionName(move)}. ${detail}`);
       }
       save();
       updateScore();
-      renderHand();
-      state.nextHandTimer = setTimeout(nextHand, 1200);
+      nextHand();
     }
 
     function buildChart(kind) {
