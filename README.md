@@ -22,7 +22,7 @@ Player actions:
 
 - Hit: take one more card.
 - Stand: stop taking cards and keep your current total.
-- Double: double the bet, take exactly one more card, then stop.
+- Double: on a two-card hand, double the bet, take exactly one more card, then stop.
 - Split: if your first two cards have the same value, separate them into two hands.
 
 ## Drill modes
@@ -32,6 +32,8 @@ Player actions:
 - Soft totals: an ace is counted as 11 because the hand total is still 21 or less.
 - Pairs: two same-value starting cards where splitting may be correct.
 - Review misses: repeats hands you answered incorrectly.
+
+Hard, soft, and mixed drills can include 3+ card decision scenarios like you might see after hitting in a real hand. In those later decisions, Double and Split are not available.
 
 ## Ace rule
 

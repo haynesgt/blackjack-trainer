@@ -687,7 +687,7 @@ APP_HTML = r"""<!doctype html>
             <ul class="hint-list">
               <li><strong>Hit:</strong> take one more card.</li>
               <li><strong>Stand:</strong> stop taking cards and keep this total.</li>
-              <li><strong>Double:</strong> double the bet, take exactly one more card, then stop.</li>
+              <li><strong>Double:</strong> on a two-card hand, double the bet, take exactly one more card, then stop.</li>
               <li><strong>Split:</strong> if your first two cards have the same value, separate them into two hands.</li>
             </ul>
           </section>
@@ -726,7 +726,7 @@ APP_HTML = r"""<!doctype html>
           <li><strong>Bust</strong> If your total goes over 21, you lose immediately.</li>
           <li><strong>Hit</strong> Take one more card. You can keep hitting until you stand or bust.</li>
           <li><strong>Stand</strong> Stop taking cards. Your current total is the total you will compare against the dealer.</li>
-          <li><strong>Double</strong> Double the bet, take exactly one more card, then your turn ends. Basic strategy uses this when one-card improvement is valuable.</li>
+          <li><strong>Double</strong> On a two-card hand, double the bet, take exactly one more card, then your turn ends. Basic strategy uses this when one-card improvement is valuable.</li>
           <li><strong>Split</strong> If your first two cards have the same value, separate them into two hands. Each card starts a new hand with its own next card.</li>
           <li><strong>Dealer turn</strong> After players finish, the dealer draws by fixed rules. In this trainer, the dealer stands on soft 17.</li>
           <li><strong>Why strategy charts work</strong> You only need your hand type and the dealer upcard. The chart tells the best long-run play for that situation.</li>
@@ -829,14 +829,42 @@ APP_HTML = r"""<!doctype html>
       return "H";
     }
 
-    function bestMove(cards, dealer) {
-      if (isPair(cards)) return pairMove(cards[0].value, dealer);
+    function canDouble(cards) {
+      return cards.length === 2;
+    }
+
+    function canSplit(cards) {
+      return cards.length === 2 && isPair(cards);
+    }
+
+    function availableActions(cards) {
+      return {
+        H: true,
+        S: true,
+        D: canDouble(cards),
+        P: canSplit(cards)
+      };
+    }
+
+    function totalMove(cards, dealer) {
       if (isSoft(cards)) return softMove(handTotal(cards), dealer);
       return hardMove(handTotal(cards), dealer);
     }
 
+    function doubleFallbackMove(cards) {
+      if (!isSoft(cards)) return "H";
+      return handTotal(cards) >= 18 ? "S" : "H";
+    }
+
+    function bestMove(cards, dealer) {
+      if (canSplit(cards)) return pairMove(cards[0].value, dealer);
+      const move = totalMove(cards, dealer);
+      if (move === "D" && !canDouble(cards)) return doubleFallbackMove(cards);
+      return move;
+    }
+
     function handKind(cards) {
-      if (isPair(cards)) return "pair";
+      if (canSplit(cards)) return "pair";
       if (isSoft(cards)) return "soft";
       return "hard";
     }
@@ -869,16 +897,17 @@ APP_HTML = r"""<!doctype html>
       const total = handTotal(cards);
       const aces = aceCount(cards);
       const rawTotal = rawAceHighTotal(cards);
-      if (isPair(cards)) {
+      const decisionNote = cards.length > 2 ? " This is a later decision after one or more hits, so Double and Split are not available." : "";
+      if (canSplit(cards)) {
         return `<strong>Pair hand:</strong> because both starting cards have the same value, check the Pairs chart first. If the best play is not Split, the app still shows the correct basic-strategy action.`;
       }
       if (aces === 0) {
-        return `<strong>Hard ${total}:</strong> there is no ace, so the total is fixed. A hit can bust this hand if the new card pushes it over 21.`;
+        return `<strong>Hard ${total}:</strong> there is no ace, so the total is fixed. A hit can bust this hand if the new card pushes it over 21.${decisionNote}`;
       }
       if (isSoft(cards)) {
-        return `<strong>Soft ${total}:</strong> the ace is counted as 11 because ${rawTotal} is not over 21. If a later card would bust you, that ace can switch to 1.`;
+        return `<strong>Soft ${total}:</strong> the ace is counted as 11 because ${rawTotal} is not over 21. If a later card would bust you, that ace can switch to 1.${decisionNote}`;
       }
-      return `<strong>Hard ${total}:</strong> this hand has an ace, but counting it as 11 would make ${rawTotal}, which is over 21. Count the ace as 1 instead.`;
+      return `<strong>Hard ${total}:</strong> this hand has an ace, but counting it as 11 would make ${rawTotal}, which is over 21. Count the ace as 1 instead.${decisionNote}`;
     }
 
     function describe(cards, dealer, move) {
@@ -889,7 +918,13 @@ APP_HTML = r"""<!doctype html>
         return `Pair of ${pair}s vs dealer ${label(dealer)}: check pair strategy before treating the cards as a regular total. ${actionName(move)} is the basic-strategy play.`;
       }
       if (kind === "soft") {
+        if (!canDouble(cards) && totalMove(cards, dealer) === "D") {
+          return `Soft ${total} vs dealer ${label(dealer)}: the chart would double on a two-card hand, but this later decision cannot double. ${actionName(move)} is the best available play.`;
+        }
         return `Soft ${total} vs dealer ${label(dealer)}: the ace counts as 11 because the total is still 21 or less. Use the soft-total chart.`;
+      }
+      if (!canDouble(cards) && totalMove(cards, dealer) === "D") {
+        return `Hard ${total} vs dealer ${label(dealer)}: the chart would double on a two-card hand, but this later decision cannot double. Hit is the best available play.`;
       }
       if (aceCount(cards) > 0) {
         return `Hard ${total} vs dealer ${label(dealer)}: the ace has to count as 1 because counting it as 11 would bust the hand. Use the hard-total chart.`;
@@ -914,14 +949,47 @@ APP_HTML = r"""<!doctype html>
       return [makeCard(first), makeCard(second)];
     }
 
+    function randomHardDecision() {
+      if (Math.random() < 0.55) return randomHard();
+      const total = 7 + Math.floor(Math.random() * 14);
+      const cardCount = Math.random() < 0.75 ? 3 : 4;
+      const values = splitTotal(total, cardCount);
+      if (!values) return randomHardDecision();
+      return values.map(makeCard);
+    }
+
     function randomSoft() {
       const low = 2 + Math.floor(Math.random() * 8);
       return [makeCard(11), makeCard(low)];
     }
 
+    function randomSoftDecision() {
+      if (Math.random() < 0.55) return randomSoft();
+      const total = 13 + Math.floor(Math.random() * 8);
+      const lowTotal = total - 11;
+      const values = splitTotal(lowTotal, Math.random() < 0.8 ? 2 : 3, 2, 7);
+      if (!values) return randomSoftDecision();
+      return [makeCard(11), ...values.map(makeCard)];
+    }
+
     function randomPair() {
       const value = [2,3,4,5,6,7,8,9,10,11][Math.floor(Math.random() * 10)];
       return [makeCard(value), makeCard(value)];
+    }
+
+    function splitTotal(total, cardCount, minValue = 2, maxValue = 10) {
+      const values = [];
+      let remaining = total;
+      for (let i = 0; i < cardCount; i += 1) {
+        const slotsLeft = cardCount - i - 1;
+        const min = Math.max(minValue, remaining - slotsLeft * maxValue);
+        const max = Math.min(maxValue, remaining - slotsLeft * minValue);
+        if (min > max) return null;
+        const value = min + Math.floor(Math.random() * (max - min + 1));
+        values.push(value);
+        remaining -= value;
+      }
+      return remaining === 0 ? values : null;
     }
 
     function newHandFromMode(mode) {
@@ -936,7 +1004,7 @@ APP_HTML = r"""<!doctype html>
       const useMode = mode === "mixed" || mode === "weak"
         ? ["hard", "soft", "pair"][Math.floor(Math.random() * 3)]
         : mode;
-      const makers = { hard: randomHard, soft: randomSoft, pair: randomPair };
+      const makers = { hard: randomHardDecision, soft: randomSoftDecision, pair: randomPair };
       const dealer = randomDealer();
       return { dealer, dealerCard: makeCard(dealer), player: makers[useMode]() };
     }
@@ -956,8 +1024,11 @@ APP_HTML = r"""<!doctype html>
       document.getElementById("dealerTotal").textContent = upcardSummary(hand.dealerCard);
       document.getElementById("playerTotal").textContent = handSummary(hand.player);
       document.getElementById("handHelp").innerHTML = handHelp(hand.player);
+      const legalActions = availableActions(hand.player);
       document.querySelectorAll(".action[data-action]").forEach(button => {
-        button.disabled = state.answered;
+        const action = button.dataset.action;
+        button.disabled = state.answered || !legalActions[action];
+        button.title = legalActions[action] ? "" : `${actionName(action)} is not available for this decision.`;
       });
     }
 
@@ -997,6 +1068,7 @@ APP_HTML = r"""<!doctype html>
 
     function answer(move) {
       if (state.answered) return;
+      if (!availableActions(state.hand.player)[move]) return;
       const correct = bestMove(state.hand.player, state.hand.dealer);
       const detail = describe(state.hand.player, state.hand.dealer, correct);
       state.answered = true;
