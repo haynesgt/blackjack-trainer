@@ -10,13 +10,13 @@ python3 app.py
 
 Then open `http://127.0.0.1:8000`.
 
-You can choose hard totals, soft totals, pairs, mixed hands, or review missed hands. The strategy model is for a 6-deck game where the dealer stands on soft 17, double after split is allowed, and surrender is not included.
+You can choose hard totals, soft totals, pairs, mixed hands, or review missed hands. The strategy model is for a 6-deck game where the dealer soft-17 rule is configurable, double after split is allowed, and surrender is not included.
 
 ## Blackjack rules
 
 The goal is to beat the dealer by ending with a higher total without going over 21. Number cards count as shown, J/Q/K count as 10, and an ace counts as 11 unless that would put the hand over 21.
 
-If your total goes over 21, you bust and lose immediately. After players finish, the dealer draws by fixed rules; this trainer uses dealer stands on soft 17.
+If your total goes over 21, you bust and lose immediately. After players finish, the dealer draws by fixed rules; this trainer lets you choose whether the dealer stands or hits on soft 17.
 
 Player actions:
 
@@ -45,4 +45,4 @@ The practice hand shows the actual cards you would see at a casino, including J,
 
 ## Chart notes
 
-The hard-total `≥17` row covers any hard total of 17 or above. The hard-total `≤8` row covers any hard total of 8 or below. The soft-total chart includes `A,10`, which is blackjack or soft 21 depending on context. The app's strategy assumes 6 decks, dealer stands on soft 17, double after split is allowed, and surrender is not included.
+The hard-total `≥17` row covers any hard total of 17 or above. The hard-total `≤8` row covers any hard total of 8 or below. The soft-total chart includes `A,10`, which is blackjack or soft 21 depending on context. The app's strategy assumes 6 decks, configurable S17/H17 dealer rule, double after split is allowed, and surrender is not included.

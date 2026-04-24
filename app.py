@@ -195,6 +195,9 @@ APP_HTML = r"""<!doctype html>
       grid-template-rows: auto 1fr auto;
       border: 1px solid rgba(0,0,0,0.12);
       user-select: none;
+      transform-origin: center bottom;
+      animation: dealCard 420ms cubic-bezier(.18,.89,.32,1.28) both;
+      animation-delay: calc(var(--deal-index, 0) * 70ms);
     }
 
     .card.red {
@@ -241,10 +244,18 @@ APP_HTML = r"""<!doctype html>
       font-weight: 800;
       font-size: 22px;
       box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+      transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
     }
 
     .action:hover {
       background: #f0f7f4;
+      transform: translateY(-3px);
+      box-shadow: 0 14px 26px rgba(0,0,0,0.2);
+    }
+
+    .action:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: 0 5px 12px rgba(0,0,0,0.18);
     }
 
     .action:disabled {
@@ -284,6 +295,40 @@ APP_HTML = r"""<!doctype html>
     .result.bad {
       background: rgba(138, 30, 24, 0.34);
       border-color: rgba(255, 192, 184, 0.48);
+    }
+
+    .result.flash {
+      animation: feedbackPop 520ms ease both;
+    }
+
+    @keyframes dealCard {
+      0% {
+        opacity: 0;
+        transform: translateY(-46px) translateX(38px) rotate(8deg) scale(0.86);
+      }
+      72% {
+        opacity: 1;
+        transform: translateY(4px) translateX(0) rotate(-1deg) scale(1.03);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) translateX(0) rotate(0) scale(1);
+      }
+    }
+
+    @keyframes feedbackPop {
+      0% {
+        transform: scale(0.98);
+        box-shadow: 0 0 0 rgba(255,255,255,0);
+      }
+      45% {
+        transform: scale(1.015);
+        box-shadow: 0 0 0 4px rgba(255,255,255,0.2);
+      }
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 rgba(255,255,255,0);
+      }
     }
 
     .side-tools {
@@ -607,6 +652,17 @@ APP_HTML = r"""<!doctype html>
         font-size: 60px;
       }
     }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 1ms !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -615,7 +671,7 @@ APP_HTML = r"""<!doctype html>
       <div class="topbar">
         <div>
           <h1>Blackjack Strategy Trainer</h1>
-          <p class="subtitle">Practice total-dependent basic strategy for a 6-deck, dealer-stands-soft-17 game with double after split. Surrender is excluded.</p>
+          <p class="subtitle">Practice total-dependent basic strategy for a 6-deck game with configurable soft-17 dealer rules. Double after split is allowed; surrender is excluded.</p>
         </div>
         <div class="score" aria-label="Session score">
           <div><strong id="correct">0</strong><span>Correct</span></div>
@@ -686,7 +742,7 @@ APP_HTML = r"""<!doctype html>
             <h2>Table Rules</h2>
             <div class="settings">
               <label>Decks <select disabled><option>6 decks</option></select></label>
-              <label>Dealer <select disabled><option>Stands soft 17</option></select></label>
+              <label>Dealer <select id="dealerRule"><option value="S17">Stands soft 17</option><option value="H17">Hits soft 17</option></select></label>
               <label>DAS <select disabled><option>Allowed</option></select></label>
               <button class="primary" id="next">Next Hand</button>
               <button class="secondary" id="reset">Reset Score</button>
@@ -708,7 +764,7 @@ APP_HTML = r"""<!doctype html>
             <ul class="hint-list">
               <li><strong>Ace rule:</strong> start by counting an ace as 11. If that would make the hand over 21, count that ace as 1 instead.</li>
               <li><strong>Hard 12-16:</strong> stand against dealer 2-6, otherwise hit.</li>
-              <li><strong>Soft 18:</strong> stand against 2, 7, 8; double against 3-6; hit against 9-A.</li>
+              <li><strong>Soft 18:</strong> S17 stands against 2; H17 doubles against 2. Both double against 3-6, stand against 7-8, and hit against 9-A.</li>
               <li><strong>Always split:</strong> aces and 8s. Never split 5s or 10s.</li>
             </ul>
           </section>
@@ -739,10 +795,10 @@ APP_HTML = r"""<!doctype html>
           <li><strong>Stand</strong> Stop taking cards. Your current total is the total you will compare against the dealer.</li>
           <li><strong>Double</strong> On a two-card hand, double the bet, take exactly one more card, then your turn ends. Basic strategy uses this when one-card improvement is valuable. If a chart play is D but the hand has more than two cards, hit instead.</li>
           <li><strong>Split</strong> If your first two cards have the same value, separate them into two hands. Each card starts a new hand with its own next card.</li>
-          <li><strong>Dealer turn</strong> After players finish, the dealer draws by fixed rules. In this trainer, the dealer stands on soft 17.</li>
+          <li><strong>Dealer turn</strong> After players finish, the dealer draws by fixed rules. In this trainer, choose whether the dealer stands or hits on soft 17.</li>
           <li><strong>Why strategy charts work</strong> You only need your hand type and the dealer upcard. The chart tells the best long-run play for that situation.</li>
         </ul>
-        <p class="rules-settings"><strong>Trainer settings:</strong> 6 decks, dealer stands on soft 17, double after split allowed, surrender not included. In the charts, dealer 10 means 10, J, Q, or K.</p>
+        <p class="rules-settings"><strong>Trainer settings:</strong> 6 decks, <span id="rulesDealerText">dealer stands on soft 17</span>, double after split allowed, surrender not included. In the charts, dealer 10 means 10, J, Q, or K.</p>
       </section>
     </aside>
   </main>
@@ -753,8 +809,11 @@ APP_HTML = r"""<!doctype html>
     const suits = ["♠", "♥", "♦", "♣"];
     const drillModes = ["mixed", "hard", "soft", "pair", "weak"];
     const savedMode = localStorage.getItem("blackjackTrainerMode");
+    const dealerRules = ["S17", "H17"];
+    const savedDealerRule = localStorage.getItem("blackjackTrainerDealerRule");
     const state = {
       mode: drillModes.includes(savedMode) ? savedMode : "mixed",
+      dealerRule: dealerRules.includes(savedDealerRule) ? savedDealerRule : "S17",
       hand: null,
       answered: false,
       stats: JSON.parse(localStorage.getItem("blackjackTrainerStats") || '{"correct":0,"missed":0,"streak":0}'),
@@ -803,22 +862,27 @@ APP_HTML = r"""<!doctype html>
       return cards.length === 2 && cards[0].value === cards[1].value;
     }
 
-    function hardMove(total, dealer) {
+    function dealerHitsSoft17() {
+      return state.dealerRule === "H17";
+    }
+
+    function hardMove(total, dealer, h17 = dealerHitsSoft17()) {
       if (total >= 17) return "S";
       if (total >= 13) return dealer >= 2 && dealer <= 6 ? "S" : "H";
       if (total === 12) return dealer >= 4 && dealer <= 6 ? "S" : "H";
-      if (total === 11) return "D";
+      if (total === 11) return dealer === 11 && !h17 ? "H" : "D";
       if (total === 10) return dealer >= 2 && dealer <= 9 ? "D" : "H";
       if (total === 9) return dealer >= 3 && dealer <= 6 ? "D" : "H";
       return "H";
     }
 
-    function softMove(total, dealer) {
+    function softMove(total, dealer, h17 = dealerHitsSoft17()) {
       if (total >= 20) return "S";
-      if (total === 19) return dealer === 6 ? "D" : "S";
+      if (total === 19) return h17 && dealer === 6 ? "D" : "S";
       if (total === 18) {
+        if (dealer === 2) return h17 ? "D" : "S";
         if (dealer >= 3 && dealer <= 6) return "D";
-        if (dealer === 2 || dealer === 7 || dealer === 8) return "S";
+        if (dealer === 7 || dealer === 8) return "S";
         return "H";
       }
       if (total === 17) return dealer >= 3 && dealer <= 6 ? "D" : "H";
@@ -1019,8 +1083,8 @@ APP_HTML = r"""<!doctype html>
       return { dealer, dealerCard: makeCard(dealer), player: makers[useMode]() };
     }
 
-    function renderCard(card) {
-      return `<div class="card ${card.red ? "red" : ""}" aria-label="${card.rank}${card.suit}">
+    function renderCard(card, index = 0) {
+      return `<div class="card ${card.red ? "red" : ""}" style="--deal-index: ${index}" aria-label="${card.rank}${card.suit}">
         <div class="pip">${card.rank}</div>
         <div class="suit">${card.suit}</div>
         <div class="pip bottom">${card.rank}</div>
@@ -1051,6 +1115,9 @@ APP_HTML = r"""<!doctype html>
       const result = document.getElementById("result");
       result.className = `result ${kind}`;
       result.innerHTML = `<strong>${title}</strong><span>${detail}</span>`;
+      result.classList.remove("flash");
+      void result.offsetWidth;
+      result.classList.add("flash");
     }
 
     function save() {
@@ -1068,6 +1135,19 @@ APP_HTML = r"""<!doctype html>
       document.querySelectorAll(".mode").forEach(item => {
         item.classList.toggle("active", item.dataset.mode === state.mode);
       });
+    }
+
+    function updateDealerRuleUI() {
+      document.getElementById("dealerRule").value = state.dealerRule;
+      document.getElementById("rulesDealerText").textContent = state.dealerRule === "H17"
+        ? "dealer hits soft 17"
+        : "dealer stands on soft 17";
+    }
+
+    function renderCharts() {
+      document.getElementById("chart-hard").innerHTML = buildChart("hard");
+      document.getElementById("chart-soft").innerHTML = buildChart("soft");
+      document.getElementById("chart-pair").innerHTML = buildChart("pair");
     }
 
     function nextHand() {
@@ -1107,6 +1187,7 @@ APP_HTML = r"""<!doctype html>
         soft: ["Soft Totals", "Use this when an ace can still count as 11 without busting."],
         pair: ["Pairs", "Use this before evaluating the hand as a hard or soft total."]
       };
+      const dealerRuleName = state.dealerRule === "H17" ? "dealer hits soft 17" : "dealer stands on soft 17";
       const rows = {
         hard: [17,16,15,14,13,12,11,10,9,8],
         soft: [21,20,19,18,17,16,15,14,13],
@@ -1123,7 +1204,7 @@ APP_HTML = r"""<!doctype html>
         const rowLabel = kind === "soft" ? `A,${row - 11}` : kind === "pair" ? `${label(row)},${label(row)}` : row === 17 ? "≥17" : row === 8 ? "≤8" : row;
         return `<tr><th>${rowLabel}</th>${cells}</tr>`;
       }).join("");
-      return `<h2>${titles[kind][0]}</h2><p>${titles[kind][1]}</p>
+      return `<h2>${titles[kind][0]}</h2><p>${titles[kind][1]} Current rule: ${dealerRuleName}.</p>
         <table aria-label="${titles[kind][0]} strategy chart">
           <thead><tr><th>Hand</th>${dealerValues.map(value => `<th>${label(value)}</th>`).join("")}</tr></thead>
           <tbody>${body}</tbody>
@@ -1151,6 +1232,13 @@ APP_HTML = r"""<!doctype html>
         updateModeButtons();
         nextHand();
       });
+      document.getElementById("dealerRule").addEventListener("change", event => {
+        state.dealerRule = event.target.value;
+        localStorage.setItem("blackjackTrainerDealerRule", state.dealerRule);
+        updateDealerRuleUI();
+        renderCharts();
+        nextHand();
+      });
       window.addEventListener("keydown", event => {
         const keyMap = { h: "H", "1": "H", s: "S", "2": "S", d: "D", "3": "D", p: "P", "4": "P" };
         const move = keyMap[event.key.toLowerCase()];
@@ -1161,10 +1249,9 @@ APP_HTML = r"""<!doctype html>
       });
     }
 
-    document.getElementById("chart-hard").innerHTML = buildChart("hard");
-    document.getElementById("chart-soft").innerHTML = buildChart("soft");
-    document.getElementById("chart-pair").innerHTML = buildChart("pair");
     bind();
+    updateDealerRuleUI();
+    renderCharts();
     updateModeButtons();
     updateScore();
     nextHand();
