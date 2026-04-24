@@ -737,7 +737,7 @@ APP_HTML = r"""<!doctype html>
           <li><strong>Bust</strong> If your total goes over 21, you lose immediately.</li>
           <li><strong>Hit</strong> Take one more card. You can keep hitting until you stand or bust.</li>
           <li><strong>Stand</strong> Stop taking cards. Your current total is the total you will compare against the dealer.</li>
-          <li><strong>Double</strong> On a two-card hand, double the bet, take exactly one more card, then your turn ends. Basic strategy uses this when one-card improvement is valuable.</li>
+          <li><strong>Double</strong> On a two-card hand, double the bet, take exactly one more card, then your turn ends. Basic strategy uses this when one-card improvement is valuable. If a chart play is D but the hand has more than two cards, hit instead.</li>
           <li><strong>Split</strong> If your first two cards have the same value, separate them into two hands. Each card starts a new hand with its own next card.</li>
           <li><strong>Dealer turn</strong> After players finish, the dealer draws by fixed rules. In this trainer, the dealer stands on soft 17.</li>
           <li><strong>Why strategy charts work</strong> You only need your hand type and the dealer upcard. The chart tells the best long-run play for that situation.</li>
