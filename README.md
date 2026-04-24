@@ -23,3 +23,7 @@ You can choose hard totals, soft totals, pairs, mixed hands, or review missed ha
 ## Ace rule
 
 An ace can count as 11 or 1. Start by counting it as 11. If that would make the hand total more than 21, count the ace as 1 instead. A "soft" hand has an ace still counted as 11; a "hard" hand does not.
+
+## Face cards
+
+The practice hand shows the actual cards you would see at a casino, including J, Q, and K. The strategy charts group 10, J, Q, and K into one `10` column because they are all worth 10 and use the same basic-strategy decisions.

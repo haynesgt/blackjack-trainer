@@ -112,7 +112,7 @@ APP_HTML = r"""<!doctype html>
     .felt-layout {
       flex: 1;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 280px;
+      grid-template-columns: minmax(0, 1fr) 300px;
       gap: 22px;
       align-items: stretch;
     }
@@ -125,8 +125,8 @@ APP_HTML = r"""<!doctype html>
       padding: 22px;
       display: grid;
       grid-template-rows: auto 1fr auto;
-      gap: 18px;
-      min-height: 570px;
+      gap: 26px;
+      min-height: 760px;
     }
 
     .hand-row {
@@ -167,21 +167,21 @@ APP_HTML = r"""<!doctype html>
     }
 
     .cards {
-      min-height: 142px;
+      min-height: 270px;
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 24px;
       flex-wrap: wrap;
     }
 
     .card {
-      width: 88px;
-      height: 124px;
+      width: 176px;
+      height: 248px;
       border-radius: 8px;
       background: #fff;
       color: #16211e;
-      box-shadow: 0 12px 28px rgba(0,0,0,0.22);
-      padding: 10px;
+      box-shadow: 0 18px 36px rgba(0,0,0,0.26);
+      padding: 18px;
       display: grid;
       grid-template-rows: auto 1fr auto;
       border: 1px solid rgba(0,0,0,0.12);
@@ -193,7 +193,7 @@ APP_HTML = r"""<!doctype html>
     }
 
     .pip {
-      font-size: 22px;
+      font-size: 44px;
       font-weight: 800;
       line-height: 1;
     }
@@ -201,7 +201,7 @@ APP_HTML = r"""<!doctype html>
     .suit {
       align-self: center;
       justify-self: center;
-      font-size: 38px;
+      font-size: 82px;
       line-height: 1;
     }
 
@@ -219,17 +219,18 @@ APP_HTML = r"""<!doctype html>
     .actions {
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 10px;
+      gap: 14px;
     }
 
     .action {
-      height: 52px;
+      height: 104px;
       border: 0;
       border-radius: 8px;
       color: #10231e;
       background: #fff;
       cursor: pointer;
       font-weight: 800;
+      font-size: 22px;
       box-shadow: 0 8px 18px rgba(0,0,0,0.18);
     }
 
@@ -383,35 +384,10 @@ APP_HTML = r"""<!doctype html>
       overflow: auto;
     }
 
-    .tabs {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      overflow: hidden;
-      margin-bottom: 18px;
-    }
-
-    .tab {
-      border: 0;
-      background: #fff;
-      min-height: 40px;
-      cursor: pointer;
-      color: var(--muted);
-      font-weight: 800;
-    }
-
-    .tab.active {
-      background: var(--felt);
-      color: #fff;
-    }
-
     .chart {
-      display: none;
-    }
-
-    .chart.active {
-      display: block;
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
     }
 
     .chart h2 {
@@ -530,6 +506,7 @@ APP_HTML = r"""<!doctype html>
 
       .practice {
         min-height: auto;
+        gap: 20px;
       }
 
       .actions {
@@ -537,12 +514,27 @@ APP_HTML = r"""<!doctype html>
       }
 
       .action {
-        height: 48px;
+        height: 78px;
+        font-size: 18px;
+      }
+
+      .cards {
+        min-height: 190px;
+        gap: 16px;
       }
 
       .card {
-        width: 72px;
-        height: 104px;
+        width: 128px;
+        height: 180px;
+        padding: 14px;
+      }
+
+      .pip {
+        font-size: 32px;
+      }
+
+      .suit {
+        font-size: 60px;
       }
     }
   </style>
@@ -642,20 +634,16 @@ APP_HTML = r"""<!doctype html>
     </section>
 
     <aside class="sidebar" aria-label="Strategy reference">
-      <div class="tabs">
-        <button class="tab active" data-chart="hard">Hard</button>
-        <button class="tab" data-chart="soft">Soft</button>
-        <button class="tab" data-chart="pair">Pairs</button>
-      </div>
       <p class="beginner-note"><strong>Ace basics:</strong> an ace can be 11 or 1. It is 11 only when the hand total stays 21 or less. A hand with an ace still counted as 11 is called soft.</p>
-      <section class="chart active" id="chart-hard"></section>
+      <p class="beginner-note"><strong>Casino cards vs charts:</strong> the practice hand shows the actual cards you would see at a table, including J, Q, and K. The charts use one <strong>10</strong> column because 10, J, Q, and K are all worth 10 and use the same strategy.</p>
+      <section class="chart" id="chart-hard"></section>
       <section class="chart" id="chart-soft"></section>
       <section class="chart" id="chart-pair"></section>
       <div class="legend">
         <span><i class="swatch H"></i> H hit</span>
-        <span><i class="swatch S"></i> S stand</span>
+        <span><i class="swatch S"></i> St stand</span>
         <span><i class="swatch D"></i> D double</span>
-        <span><i class="swatch P"></i> P split</span>
+        <span><i class="swatch P"></i> Sp split</span>
       </div>
     </aside>
   </main>
@@ -766,6 +754,10 @@ APP_HTML = r"""<!doctype html>
       return { H: "Hit", S: "Stand", D: "Double", P: "Split" }[move] || "Unknown";
     }
 
+    function chartMoveLabel(move) {
+      return { H: "H", S: "St", D: "D", P: "Sp" }[move] || move;
+    }
+
     function handSummary(cards) {
       const kind = handKind(cards);
       const total = handTotal(cards);
@@ -773,6 +765,13 @@ APP_HTML = r"""<!doctype html>
         return `Pair ${label(cards[0].value)}s`;
       }
       return `${kind[0].toUpperCase() + kind.slice(1)} ${total}`;
+    }
+
+    function upcardSummary(card) {
+      if (card.value === 10 && card.rank !== "10") {
+        return `Upcard ${card.rank} (value 10)`;
+      }
+      return `Upcard ${card.rank}`;
     }
 
     function handHelp(cards) {
@@ -839,6 +838,7 @@ APP_HTML = r"""<!doctype html>
         const missed = state.misses[Math.floor(Math.random() * state.misses.length)];
         return {
           dealer: missed.dealer,
+          dealerCard: makeCard(missed.dealer),
           player: missed.player.map(card => makeCard(card.value))
         };
       }
@@ -846,7 +846,8 @@ APP_HTML = r"""<!doctype html>
         ? ["hard", "soft", "pair"][Math.floor(Math.random() * 3)]
         : mode;
       const makers = { hard: randomHard, soft: randomSoft, pair: randomPair };
-      return { dealer: randomDealer(), player: makers[useMode]() };
+      const dealer = randomDealer();
+      return { dealer, dealerCard: makeCard(dealer), player: makers[useMode]() };
     }
 
     function renderCard(card) {
@@ -859,9 +860,9 @@ APP_HTML = r"""<!doctype html>
 
     function renderHand() {
       const hand = state.hand;
-      document.getElementById("dealerCards").innerHTML = renderCard(makeCard(hand.dealer));
+      document.getElementById("dealerCards").innerHTML = renderCard(hand.dealerCard);
       document.getElementById("playerCards").innerHTML = hand.player.map(renderCard).join("");
-      document.getElementById("dealerTotal").textContent = `Upcard ${label(hand.dealer)}`;
+      document.getElementById("dealerTotal").textContent = upcardSummary(hand.dealerCard);
       document.getElementById("playerTotal").textContent = handSummary(hand.player);
       document.getElementById("handHelp").innerHTML = handHelp(hand.player);
       document.querySelectorAll(".action[data-action]").forEach(button => {
@@ -937,7 +938,7 @@ APP_HTML = r"""<!doctype html>
           if (kind === "hard") move = hardMove(row, dealer);
           if (kind === "soft") move = softMove(row, dealer);
           if (kind === "pair") move = pairMove(row, dealer);
-          return `<td class="${move}">${move}</td>`;
+          return `<td class="${move}">${chartMoveLabel(move)}</td>`;
         }).join("");
         const rowLabel = kind === "soft" ? `A,${row - 11}` : kind === "pair" ? `${label(row)},${label(row)}` : row;
         return `<tr><th>${rowLabel}</th>${cells}</tr>`;
@@ -968,12 +969,6 @@ APP_HTML = r"""<!doctype html>
         state.mode = button.dataset.mode;
         document.querySelectorAll(".mode").forEach(item => item.classList.toggle("active", item === button));
         nextHand();
-      });
-      document.querySelector(".tabs").addEventListener("click", event => {
-        const button = event.target.closest("button[data-chart]");
-        if (!button) return;
-        document.querySelectorAll(".tab").forEach(tab => tab.classList.toggle("active", tab === button));
-        document.querySelectorAll(".chart").forEach(chart => chart.classList.toggle("active", chart.id === `chart-${button.dataset.chart}`));
       });
       window.addEventListener("keydown", event => {
         const keyMap = { h: "H", s: "S", d: "D", p: "P", n: "N", " ": "N" };
