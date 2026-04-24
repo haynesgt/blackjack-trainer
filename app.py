@@ -227,7 +227,7 @@ APP_HTML = r"""<!doctype html>
 
     .actions {
       display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 14px;
     }
 
@@ -636,7 +636,6 @@ APP_HTML = r"""<!doctype html>
               <button class="action" data-action="S">Stand</button>
               <button class="action" data-action="D">Double</button>
               <button class="action" data-action="P">Split</button>
-              <button class="action" data-action="N">New Hand</button>
             </div>
             <div class="result" id="result" aria-live="polite">
               <strong>Choose the best play.</strong>
@@ -746,6 +745,7 @@ APP_HTML = r"""<!doctype html>
     const state = {
       mode: drillModes.includes(savedMode) ? savedMode : "mixed",
       hand: null,
+      nextHandTimer: null,
       answered: false,
       stats: JSON.parse(localStorage.getItem("blackjackTrainerStats") || '{"correct":0,"missed":0,"streak":0}'),
       misses: JSON.parse(localStorage.getItem("blackjackTrainerMisses") || "[]")
@@ -957,7 +957,7 @@ APP_HTML = r"""<!doctype html>
       document.getElementById("playerTotal").textContent = handSummary(hand.player);
       document.getElementById("handHelp").innerHTML = handHelp(hand.player);
       document.querySelectorAll(".action[data-action]").forEach(button => {
-        button.disabled = state.answered && button.dataset.action !== "N";
+        button.disabled = state.answered;
       });
     }
 
@@ -985,6 +985,10 @@ APP_HTML = r"""<!doctype html>
     }
 
     function nextHand() {
+      if (state.nextHandTimer) {
+        clearTimeout(state.nextHandTimer);
+        state.nextHandTimer = null;
+      }
       state.hand = newHandFromMode(state.mode);
       state.answered = false;
       renderHand();
@@ -992,10 +996,6 @@ APP_HTML = r"""<!doctype html>
     }
 
     function answer(move) {
-      if (move === "N") {
-        nextHand();
-        return;
-      }
       if (state.answered) return;
       const correct = bestMove(state.hand.player, state.hand.dealer);
       const detail = describe(state.hand.player, state.hand.dealer, correct);
@@ -1016,6 +1016,7 @@ APP_HTML = r"""<!doctype html>
       save();
       updateScore();
       renderHand();
+      state.nextHandTimer = setTimeout(nextHand, 1200);
     }
 
     function buildChart(kind) {
@@ -1069,7 +1070,7 @@ APP_HTML = r"""<!doctype html>
         nextHand();
       });
       window.addEventListener("keydown", event => {
-        const keyMap = { h: "H", s: "S", d: "D", p: "P", n: "N", " ": "N" };
+        const keyMap = { h: "H", s: "S", d: "D", p: "P" };
         const move = keyMap[event.key.toLowerCase()];
         if (move) {
           event.preventDefault();
