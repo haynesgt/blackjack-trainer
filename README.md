@@ -10,7 +10,7 @@ python3 app.py
 
 Then open `http://127.0.0.1:8000`.
 
-You can choose hard totals, soft totals, pairs, mixed hands, or review missed hands. The strategy model is for a 6-deck game where the dealer soft-17 rule is configurable, double after split is allowed, and surrender is not included.
+You can choose hard totals, soft totals, pairs, mixed hands, or review missed hands. The strategy model is for a 6-deck game where the dealer soft-17 rule and DAS rule are configurable, and surrender is not included.
 
 ## Blackjack rules
 
@@ -24,6 +24,8 @@ Player actions:
 - Stand: stop taking cards and keep your current total. Shortcut: `2` or `S`.
 - Double: on a two-card hand, double the bet, take exactly one more card, then stop. If a chart play is Double but the hand has more than two cards, hit instead. Shortcut: `3` or `D`.
 - Split: if your first two cards have the same value, separate them into two hands. Shortcut: `4` or `P`.
+
+DAS means Double After Split. If DAS is not allowed, some pairs are no longer worth splitting because you cannot double the new split hands.
 
 ## Drill modes
 
@@ -45,4 +47,4 @@ The practice hand shows the actual cards you would see at a casino, including J,
 
 ## Chart notes
 
-The hard-total `≥17` row covers any hard total of 17 or above. The hard-total `≤8` row covers any hard total of 8 or below. The soft-total chart includes `A,10`, which is blackjack or soft 21 depending on context. The app's strategy assumes 6 decks, configurable S17/H17 dealer rule, double after split is allowed, and surrender is not included.
+The hard-total `≥17` row covers any hard total of 17 or above. The hard-total `≤8` row covers any hard total of 8 or below. The soft-total chart includes `A,10`, which is blackjack or soft 21 depending on context. The app's strategy assumes 6 decks, configurable S17/H17 dealer rule, configurable DAS/NDAS rule, and surrender is not included.

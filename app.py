@@ -743,7 +743,7 @@ APP_HTML = r"""<!doctype html>
             <div class="settings">
               <label>Decks <select disabled><option>6 decks</option></select></label>
               <label>Dealer <select id="dealerRule"><option value="S17">Stands soft 17</option><option value="H17">Hits soft 17</option></select></label>
-              <label>DAS <select disabled><option>Allowed</option></select></label>
+              <label>DAS <select id="dasRule"><option value="DAS">Allowed</option><option value="NDAS">Not allowed</option></select></label>
               <button class="primary" id="next">Next Hand</button>
               <button class="secondary" id="reset">Reset Score</button>
             </div>
@@ -795,10 +795,11 @@ APP_HTML = r"""<!doctype html>
           <li><strong>Stand</strong> Stop taking cards. Your current total is the total you will compare against the dealer.</li>
           <li><strong>Double</strong> On a two-card hand, double the bet, take exactly one more card, then your turn ends. Basic strategy uses this when one-card improvement is valuable. If a chart play is D but the hand has more than two cards, hit instead.</li>
           <li><strong>Split</strong> If your first two cards have the same value, separate them into two hands. Each card starts a new hand with its own next card.</li>
+          <li><strong>DAS</strong> Double After Split. If DAS is not allowed, some pairs are no longer worth splitting because you cannot double the new split hands.</li>
           <li><strong>Dealer turn</strong> After players finish, the dealer draws by fixed rules. In this trainer, choose whether the dealer stands or hits on soft 17.</li>
           <li><strong>Why strategy charts work</strong> You only need your hand type and the dealer upcard. The chart tells the best long-run play for that situation.</li>
         </ul>
-        <p class="rules-settings"><strong>Trainer settings:</strong> 6 decks, <span id="rulesDealerText">dealer stands on soft 17</span>, double after split allowed, surrender not included. In the charts, dealer 10 means 10, J, Q, or K.</p>
+        <p class="rules-settings"><strong>Trainer settings:</strong> 6 decks, <span id="rulesDealerText">dealer stands on soft 17</span>, <span id="rulesDasText">double after split allowed</span>, surrender not included. In the charts, dealer 10 means 10, J, Q, or K.</p>
       </section>
     </aside>
   </main>
@@ -811,9 +812,12 @@ APP_HTML = r"""<!doctype html>
     const savedMode = localStorage.getItem("blackjackTrainerMode");
     const dealerRules = ["S17", "H17"];
     const savedDealerRule = localStorage.getItem("blackjackTrainerDealerRule");
+    const dasRules = ["DAS", "NDAS"];
+    const savedDasRule = localStorage.getItem("blackjackTrainerDasRule");
     const state = {
       mode: drillModes.includes(savedMode) ? savedMode : "mixed",
       dealerRule: dealerRules.includes(savedDealerRule) ? savedDealerRule : "S17",
+      dasRule: dasRules.includes(savedDasRule) ? savedDasRule : "DAS",
       hand: null,
       answered: false,
       stats: JSON.parse(localStorage.getItem("blackjackTrainerStats") || '{"correct":0,"missed":0,"streak":0}'),
@@ -866,6 +870,10 @@ APP_HTML = r"""<!doctype html>
       return state.dealerRule === "H17";
     }
 
+    function doubleAfterSplitAllowed() {
+      return state.dasRule === "DAS";
+    }
+
     function hardMove(total, dealer, h17 = dealerHitsSoft17()) {
       if (total >= 17) return "S";
       if (total >= 13) return dealer >= 2 && dealer <= 6 ? "S" : "H";
@@ -891,15 +899,15 @@ APP_HTML = r"""<!doctype html>
       return "H";
     }
 
-    function pairMove(pairValue, dealer) {
+    function pairMove(pairValue, dealer, das = doubleAfterSplitAllowed()) {
       if (pairValue === 11 || pairValue === 8) return "P";
       if (pairValue === 10) return "S";
       if (pairValue === 9) return [2,3,4,5,6,8,9].includes(dealer) ? "P" : "S";
       if (pairValue === 7) return dealer >= 2 && dealer <= 7 ? "P" : "H";
-      if (pairValue === 6) return dealer >= 2 && dealer <= 6 ? "P" : "H";
+      if (pairValue === 6) return dealer >= (das ? 2 : 3) && dealer <= 6 ? "P" : "H";
       if (pairValue === 5) return dealer >= 2 && dealer <= 9 ? "D" : "H";
-      if (pairValue === 4) return dealer === 5 || dealer === 6 ? "P" : "H";
-      if (pairValue === 3 || pairValue === 2) return dealer >= 2 && dealer <= 7 ? "P" : "H";
+      if (pairValue === 4) return das && (dealer === 5 || dealer === 6) ? "P" : "H";
+      if (pairValue === 3 || pairValue === 2) return dealer >= (das ? 2 : 4) && dealer <= 7 ? "P" : "H";
       return "H";
     }
 
@@ -1139,9 +1147,13 @@ APP_HTML = r"""<!doctype html>
 
     function updateDealerRuleUI() {
       document.getElementById("dealerRule").value = state.dealerRule;
+      document.getElementById("dasRule").value = state.dasRule;
       document.getElementById("rulesDealerText").textContent = state.dealerRule === "H17"
         ? "dealer hits soft 17"
         : "dealer stands on soft 17";
+      document.getElementById("rulesDasText").textContent = state.dasRule === "DAS"
+        ? "double after split allowed"
+        : "double after split not allowed";
     }
 
     function renderCharts() {
@@ -1188,6 +1200,7 @@ APP_HTML = r"""<!doctype html>
         pair: ["Pairs", "Use this before evaluating the hand as a hard or soft total."]
       };
       const dealerRuleName = state.dealerRule === "H17" ? "dealer hits soft 17" : "dealer stands on soft 17";
+      const dasRuleName = state.dasRule === "DAS" ? "DAS allowed" : "DAS not allowed";
       const rows = {
         hard: [17,16,15,14,13,12,11,10,9,8],
         soft: [21,20,19,18,17,16,15,14,13],
@@ -1204,7 +1217,7 @@ APP_HTML = r"""<!doctype html>
         const rowLabel = kind === "soft" ? `A,${row - 11}` : kind === "pair" ? `${label(row)},${label(row)}` : row === 17 ? "≥17" : row === 8 ? "≤8" : row;
         return `<tr><th>${rowLabel}</th>${cells}</tr>`;
       }).join("");
-      return `<h2>${titles[kind][0]}</h2><p>${titles[kind][1]} Current rule: ${dealerRuleName}.</p>
+      return `<h2>${titles[kind][0]}</h2><p>${titles[kind][1]} Current rules: ${dealerRuleName}; ${dasRuleName}.</p>
         <table aria-label="${titles[kind][0]} strategy chart">
           <thead><tr><th>Hand</th>${dealerValues.map(value => `<th>${label(value)}</th>`).join("")}</tr></thead>
           <tbody>${body}</tbody>
@@ -1235,6 +1248,13 @@ APP_HTML = r"""<!doctype html>
       document.getElementById("dealerRule").addEventListener("change", event => {
         state.dealerRule = event.target.value;
         localStorage.setItem("blackjackTrainerDealerRule", state.dealerRule);
+        updateDealerRuleUI();
+        renderCharts();
+        nextHand();
+      });
+      document.getElementById("dasRule").addEventListener("change", event => {
+        state.dasRule = event.target.value;
+        localStorage.setItem("blackjackTrainerDasRule", state.dasRule);
         updateDealerRuleUI();
         renderCharts();
         nextHand();
