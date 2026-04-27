@@ -866,15 +866,16 @@ APP_HTML = r"""<!doctype html>
             </ul>
           </section>
 
-          <section class="tool-panel">
-            <h2>Fast Rules</h2>
-            <ul class="hint-list">
-              <li><strong>Ace rule:</strong> start by counting an ace as 11. If that would make the hand over 21, count that ace as 1 instead.</li>
-              <li><strong>Hard 12-16:</strong> stand against dealer 2-6, otherwise hit.</li>
-              <li><strong>Soft 18:</strong> S17 stands against 2; H17 doubles against 2. Both double against 3-6, stand against 7-8, and hit against 9-A.</li>
-              <li><strong>Always split:</strong> aces and 8s. Never split 5s or 10s.</li>
-            </ul>
-          </section>
+      <section class="tool-panel">
+        <h2>Fast Rules</h2>
+        <ul class="hint-list">
+          <li><strong>Ace rule:</strong> start by counting an ace as 11. If that would make the hand over 21, count that ace as 1 instead.</li>
+          <li><strong>Hard 12-16:</strong> stand against dealer 2-6, otherwise hit.</li>
+          <li><strong>Soft 18:</strong> S17 stands against 2; H17 doubles against 2. Both double against 3-6, stand against 7-8, and hit against 9-A.</li>
+          <li><strong>Double fallback:</strong> D/H means double if allowed, otherwise hit. D/S means double if allowed, otherwise stand.</li>
+          <li><strong>Always split:</strong> aces and 8s. Never split 5s or 10s.</li>
+        </ul>
+      </section>
         </aside>
       </div>
     </section>
@@ -888,7 +889,8 @@ APP_HTML = r"""<!doctype html>
       <div class="legend">
         <span><i class="swatch H"></i> H hit</span>
         <span><i class="swatch S"></i> St stand</span>
-        <span><i class="swatch D"></i> D double</span>
+        <span><i class="swatch D"></i> D/H double, otherwise hit</span>
+        <span><i class="swatch D"></i> D/S double, otherwise stand</span>
         <span><i class="swatch P"></i> Sp split</span>
       </div>
       <section class="rules-panel" aria-label="Game rules">
@@ -900,13 +902,13 @@ APP_HTML = r"""<!doctype html>
           <li><strong>Bust</strong> If your total goes over 21, you lose immediately.</li>
           <li><strong>Hit</strong> Take one more card. You can keep hitting until you stand or bust.</li>
           <li><strong>Stand</strong> Stop taking cards. Your current total is the total you will compare against the dealer.</li>
-          <li><strong>Double</strong> On a two-card hand, double the bet, take exactly one more card, then your turn ends. Basic strategy uses this when one-card improvement is valuable. If a chart play is D but the hand has more than two cards, hit instead.</li>
+          <li><strong>Double</strong> On a two-card hand, double the bet, take exactly one more card, then your turn ends. In the charts, D/H means double if allowed, otherwise hit. D/S means double if allowed, otherwise stand.</li>
           <li><strong>Split</strong> If your first two cards have the same value, separate them into two hands. Each card starts a new hand with its own next card.</li>
           <li><strong>DAS</strong> Double After Split. If DAS is not allowed, some pairs are no longer worth splitting because you cannot double the new split hands.</li>
           <li><strong>Dealer turn</strong> After players finish, the dealer draws by fixed rules. In this trainer, choose whether the dealer stands or hits on soft 17.</li>
           <li><strong>Why strategy charts work</strong> You only need your hand type and the dealer upcard. The chart tells the best long-run play for that situation.</li>
         </ul>
-        <p class="rules-settings"><strong>Trainer settings:</strong> 6 decks, <span id="rulesDealerText">dealer stands on soft 17</span>, <span id="rulesDasText">double after split allowed</span>, surrender not included. In the charts, dealer 10 means 10, J, Q, or K.</p>
+        <p class="rules-settings"><strong>Trainer settings:</strong> 6 decks, <span id="rulesDealerText">dealer hits soft 17</span>, <span id="rulesDasText">double after split allowed</span>, surrender not included. In the charts, dealer 10 means 10, J, Q, or K.</p>
       </section>
     </aside>
   </main>
@@ -923,7 +925,7 @@ APP_HTML = r"""<!doctype html>
     const savedDasRule = localStorage.getItem("blackjackTrainerDasRule");
     const state = {
       mode: drillModes.includes(savedMode) ? savedMode : "mixed",
-      dealerRule: dealerRules.includes(savedDealerRule) ? savedDealerRule : "S17",
+      dealerRule: dealerRules.includes(savedDealerRule) ? savedDealerRule : "H17",
       dasRule: dasRules.includes(savedDasRule) ? savedDasRule : "DAS",
       hand: null,
       answered: false,
@@ -1062,8 +1064,14 @@ APP_HTML = r"""<!doctype html>
       return { H: "Hit", S: "Stand", D: "Double", P: "Split" }[move] || "Unknown";
     }
 
-    function chartMoveLabel(move) {
-      return { H: "H", S: "St", D: "D", P: "Sp" }[move] || move;
+    function chartMoveLabel(kind, row, dealer, move) {
+      if (move === "D") {
+        if (kind === "soft") {
+          return row >= 18 ? "D/S" : "D/H";
+        }
+        return "D/H";
+      }
+      return { H: "H", S: "St", P: "Sp" }[move] || move;
     }
 
     function handSummary(cards) {
@@ -1319,7 +1327,7 @@ APP_HTML = r"""<!doctype html>
           if (kind === "hard") move = hardMove(row, dealer);
           if (kind === "soft") move = softMove(row, dealer);
           if (kind === "pair") move = pairMove(row, dealer);
-          return `<td class="${move}">${chartMoveLabel(move)}</td>`;
+          return `<td class="${move}">${chartMoveLabel(kind, row, dealer, move)}</td>`;
         }).join("");
         const rowLabel = kind === "soft" ? `A,${row - 11}` : kind === "pair" ? `${label(row)},${label(row)}` : row === 17 ? "≥17" : row === 8 ? "≤8" : row;
         return `<tr><th>${rowLabel}</th>${cells}</tr>`;
