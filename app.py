@@ -56,7 +56,7 @@ APP_HTML = r"""<!doctype html>
 
     .table {
       height: 100vh;
-      padding: 28px;
+      padding: clamp(16px, 2vw, 28px);
       background:
         radial-gradient(circle at 22% 18%, rgba(255,255,255,0.14), transparent 28%),
         radial-gradient(circle at 82% 16%, rgba(255,209,102,0.14), transparent 24%),
@@ -64,7 +64,7 @@ APP_HTML = r"""<!doctype html>
       color: #fff;
       display: flex;
       flex-direction: column;
-      gap: 22px;
+      gap: clamp(14px, 1.8vw, 22px);
       overflow-y: auto;
       min-width: 0;
     }
@@ -73,21 +73,33 @@ APP_HTML = r"""<!doctype html>
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      min-width: 0;
+      flex-wrap: nowrap;
     }
 
     h1 {
       margin: 0;
-      font-size: clamp(30px, 4vw, 54px);
-      line-height: 0.96;
+      font-size: clamp(20px, 2.2vw, 32px);
+      line-height: 1;
       letter-spacing: 0;
+      white-space: nowrap;
     }
 
     .subtitle {
-      margin: 8px 0 0;
+      margin: 0;
       color: rgba(255,255,255,0.78);
-      max-width: 720px;
-      font-size: 16px;
+      font-size: 12px;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .score {
@@ -100,9 +112,9 @@ APP_HTML = r"""<!doctype html>
       border: 1px solid rgba(255,255,255,0.22);
       background: rgba(255,255,255,0.12);
       border-radius: 8px;
-      padding: 10px;
+      padding: 8px;
       text-align: center;
-      min-height: 68px;
+      min-height: 60px;
     }
 
     .score strong {
@@ -122,7 +134,7 @@ APP_HTML = r"""<!doctype html>
       flex: 1;
       display: grid;
       grid-template-columns: minmax(0, 1fr) 300px;
-      gap: 22px;
+      gap: clamp(14px, 1.8vw, 22px);
       align-items: stretch;
     }
 
@@ -131,16 +143,20 @@ APP_HTML = r"""<!doctype html>
       border-radius: 8px;
       background: rgba(4, 31, 24, 0.24);
       box-shadow: var(--shadow);
-      padding: 22px;
+      padding: clamp(16px, 2vw, 22px);
       display: grid;
       grid-template-rows: auto 1fr auto;
-      gap: 26px;
-      min-height: 760px;
+      gap: clamp(16px, 2vw, 26px);
+      min-height: clamp(540px, 68vh, 760px);
     }
 
     .hand-row {
       display: grid;
-      gap: 10px;
+      gap: 8px;
+    }
+
+    .player-hand {
+      gap: 0;
     }
 
     .hand-label {
@@ -154,12 +170,12 @@ APP_HTML = r"""<!doctype html>
     }
 
     .hand-help {
-      margin: -4px 0 0;
+      margin: -2px 0 0;
       border: 1px solid rgba(255,255,255,0.22);
       border-radius: 8px;
       background: rgba(255,255,255,0.1);
       color: rgba(255,255,255,0.84);
-      padding: 10px 12px;
+      padding: 9px 11px;
       font-size: 14px;
       line-height: 1.35;
     }
@@ -176,21 +192,27 @@ APP_HTML = r"""<!doctype html>
     }
 
     .cards {
-      min-height: 270px;
+      min-height: clamp(170px, 24vh, 270px);
       display: flex;
       align-items: center;
-      gap: 24px;
+      gap: clamp(12px, 1.8vw, 24px);
       flex-wrap: wrap;
     }
 
+    .player-hand .cards {
+      min-height: 0;
+      margin-top: -2px;
+      align-items: flex-start;
+    }
+
     .card {
-      width: 176px;
-      height: 248px;
+      width: clamp(132px, 11vw, 176px);
+      height: clamp(188px, 15vw, 248px);
       border-radius: 8px;
       background: #fff;
       color: #16211e;
       box-shadow: 0 18px 36px rgba(0,0,0,0.26);
-      padding: 18px;
+      padding: clamp(14px, 1.2vw, 18px);
       display: grid;
       grid-template-rows: auto 1fr auto;
       border: 1px solid rgba(0,0,0,0.12);
@@ -205,7 +227,7 @@ APP_HTML = r"""<!doctype html>
     }
 
     .pip {
-      font-size: 44px;
+      font-size: clamp(32px, 2.7vw, 44px);
       font-weight: 800;
       line-height: 1;
     }
@@ -213,7 +235,7 @@ APP_HTML = r"""<!doctype html>
     .suit {
       align-self: center;
       justify-self: center;
-      font-size: 82px;
+      font-size: clamp(58px, 5vw, 82px);
       line-height: 1;
     }
 
@@ -224,25 +246,25 @@ APP_HTML = r"""<!doctype html>
 
     .decision {
       display: grid;
-      gap: 12px;
+      gap: 10px;
       align-content: end;
     }
 
     .actions {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 14px;
+      gap: 10px;
     }
 
     .action {
-      height: 104px;
+      height: clamp(72px, 9.5vh, 104px);
       border: 0;
       border-radius: 8px;
       color: #10231e;
       background: #fff;
       cursor: pointer;
       font-weight: 800;
-      font-size: 22px;
+      font-size: clamp(18px, 1.8vw, 22px);
       box-shadow: 0 8px 18px rgba(0,0,0,0.18);
       transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
     }
@@ -265,9 +287,9 @@ APP_HTML = r"""<!doctype html>
 
     .prompt,
     .result {
-      min-height: 112px;
+      min-height: 92px;
       border-radius: 8px;
-      padding: 16px;
+      padding: 14px;
       background: rgba(255,255,255,0.12);
       border: 1px solid rgba(255,255,255,0.22);
       color: rgba(255,255,255,0.88);
@@ -275,7 +297,7 @@ APP_HTML = r"""<!doctype html>
     }
 
     .prompt {
-      min-height: 86px;
+      min-height: 74px;
       background: rgba(255,255,255,0.16);
     }
 
@@ -283,8 +305,8 @@ APP_HTML = r"""<!doctype html>
     .result strong {
       display: block;
       color: #fff;
-      font-size: 22px;
-      margin-bottom: 6px;
+      font-size: 20px;
+      margin-bottom: 4px;
     }
 
     .result.good {
@@ -333,7 +355,7 @@ APP_HTML = r"""<!doctype html>
 
     .side-tools {
       display: grid;
-      gap: 14px;
+      gap: 12px;
       align-content: start;
     }
 
@@ -341,18 +363,18 @@ APP_HTML = r"""<!doctype html>
       background: rgba(255,255,255,0.94);
       color: var(--ink);
       border-radius: 8px;
-      padding: 16px;
+      padding: 14px;
       border: 1px solid rgba(255,255,255,0.4);
     }
 
     .tool-panel h2 {
-      margin: 0 0 12px;
+      margin: 0 0 10px;
       font-size: 17px;
     }
 
     .mode-grid {
       display: grid;
-      gap: 8px;
+      gap: 6px;
     }
 
     .mode {
@@ -360,8 +382,8 @@ APP_HTML = r"""<!doctype html>
       background: #fff;
       color: var(--ink);
       border-radius: 8px;
-      min-height: 64px;
-      padding: 10px;
+      min-height: 58px;
+      padding: 9px;
       cursor: pointer;
       text-align: left;
       display: grid;
@@ -394,7 +416,7 @@ APP_HTML = r"""<!doctype html>
 
     .settings {
       display: grid;
-      gap: 10px;
+      gap: 8px;
       color: var(--muted);
       font-size: 14px;
     }
@@ -441,14 +463,14 @@ APP_HTML = r"""<!doctype html>
       border-left: 1px solid var(--line);
       background: var(--panel);
       height: 100vh;
-      padding: 22px;
+      padding: clamp(16px, 2vw, 22px);
       overflow-y: auto;
       min-width: 0;
     }
 
     .chart {
-      margin-top: 22px;
-      padding-top: 18px;
+      margin-top: 18px;
+      padding-top: 14px;
       border-top: 1px solid var(--line);
     }
 
@@ -532,9 +554,9 @@ APP_HTML = r"""<!doctype html>
     }
 
     .beginner-note {
-      margin: 0 0 14px;
+      margin: 0 0 12px;
       border-left: 4px solid #ffd166;
-      padding: 10px 12px;
+      padding: 9px 11px;
       background: #fff8e6;
       color: #4d3a0d;
       font-size: 14px;
@@ -542,8 +564,8 @@ APP_HTML = r"""<!doctype html>
     }
 
     .rules-panel {
-      margin-top: 22px;
-      padding-top: 18px;
+      margin-top: 18px;
+      padding-top: 14px;
       border-top: 1px solid var(--line);
     }
 
@@ -593,7 +615,7 @@ APP_HTML = r"""<!doctype html>
 
       .table {
         height: auto;
-        min-height: 100vh;
+        min-height: 0;
         overflow: visible;
       }
 
@@ -603,11 +625,44 @@ APP_HTML = r"""<!doctype html>
         border-left: 0;
         overflow: visible;
       }
+
+      .felt-layout {
+        grid-template-columns: minmax(0, 1fr) 260px;
+      }
+
+      .practice {
+        min-height: 0;
+      }
+    }
+
+    @media (max-width: 960px) {
+      .topbar {
+        display: grid;
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+
+      .brand {
+        gap: 8px;
+      }
+
+      .score {
+        width: 100%;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .felt-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .side-tools {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
 
     @media (max-width: 820px) {
       .table {
-        padding: 18px;
+        padding: 14px;
       }
 
       .topbar, .felt-layout {
@@ -621,7 +676,7 @@ APP_HTML = r"""<!doctype html>
 
       .practice {
         min-height: auto;
-        gap: 20px;
+        gap: 16px;
       }
 
       .actions {
@@ -634,22 +689,74 @@ APP_HTML = r"""<!doctype html>
       }
 
       .cards {
-        min-height: 190px;
-        gap: 16px;
+        min-height: 150px;
+        gap: 12px;
       }
 
       .card {
-        width: 128px;
-        height: 180px;
-        padding: 14px;
+        width: 112px;
+        height: 156px;
+        padding: 12px;
       }
 
       .pip {
-        font-size: 32px;
+        font-size: 28px;
       }
 
       .suit {
-        font-size: 60px;
+        font-size: 50px;
+      }
+
+      .side-tools {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        padding: 14px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      h1 {
+        font-size: clamp(18px, 5.4vw, 24px);
+      }
+
+      .subtitle {
+        font-size: 11px;
+      }
+
+      .score strong {
+        font-size: 20px;
+      }
+
+      .score span {
+        font-size: 11px;
+      }
+
+      .action {
+        height: 64px;
+        font-size: 16px;
+      }
+
+      .prompt,
+      .result {
+        min-height: 0;
+        padding: 12px;
+      }
+
+      .prompt strong,
+      .result strong {
+        font-size: 18px;
+      }
+
+      .brand {
+        display: grid;
+        gap: 4px;
+      }
+
+      h1,
+      .subtitle {
+        white-space: normal;
       }
     }
 
@@ -669,7 +776,7 @@ APP_HTML = r"""<!doctype html>
   <main class="app">
     <section class="table">
       <div class="topbar">
-        <div>
+        <div class="brand">
           <h1>Blackjack Strategy Trainer</h1>
           <p class="subtitle">Practice total-dependent basic strategy for a 6-deck game with configurable soft-17 dealer rules. Double after split is allowed; surrender is excluded.</p>
         </div>
@@ -687,7 +794,7 @@ APP_HTML = r"""<!doctype html>
             <div class="cards" id="dealerCards"></div>
           </div>
 
-          <div class="hand-row">
+          <div class="hand-row player-hand">
             <div class="hand-label">Your hand <span class="total" id="playerTotal"></span></div>
             <div class="cards" id="playerCards"></div>
             <div class="hand-help" id="handHelp"></div>
