@@ -50,7 +50,7 @@ APP_HTML = r"""<!doctype html>
     .app {
       height: 100vh;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 370px;
+      grid-template-columns: minmax(0, 1fr) 1120px;
       overflow: hidden;
     }
 
@@ -132,10 +132,7 @@ APP_HTML = r"""<!doctype html>
 
     .felt-layout {
       flex: 1;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 300px;
-      gap: clamp(14px, 1.8vw, 22px);
-      align-items: stretch;
+      min-width: 0;
     }
 
     .practice {
@@ -357,6 +354,17 @@ APP_HTML = r"""<!doctype html>
       display: grid;
       gap: 12px;
       align-content: start;
+    }
+
+    .sidebar-stack {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .sidebar-reference {
+      min-width: 0;
     }
 
     .tool-panel {
@@ -627,11 +635,11 @@ APP_HTML = r"""<!doctype html>
       }
 
       .felt-layout {
-        grid-template-columns: minmax(0, 1fr) 260px;
+        min-height: 0;
       }
 
-      .practice {
-        min-height: 0;
+      .sidebar-stack {
+        grid-template-columns: 1fr;
       }
     }
 
@@ -649,10 +657,6 @@ APP_HTML = r"""<!doctype html>
       .score {
         width: 100%;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-
-      .felt-layout {
-        grid-template-columns: 1fr;
       }
 
       .side-tools {
@@ -817,7 +821,11 @@ APP_HTML = r"""<!doctype html>
             </div>
           </div>
         </section>
+      </div>
+    </section>
 
+    <aside class="sidebar" aria-label="Strategy reference">
+      <div class="sidebar-stack">
         <aside class="side-tools" aria-label="Practice controls">
           <section class="tool-panel">
             <h2>Drill Mode</h2>
@@ -866,50 +874,50 @@ APP_HTML = r"""<!doctype html>
             </ul>
           </section>
 
-      <section class="tool-panel">
-        <h2>Fast Rules</h2>
-        <ul class="hint-list">
-          <li><strong>Ace rule:</strong> start by counting an ace as 11. If that would make the hand over 21, count that ace as 1 instead.</li>
-          <li><strong>Hard 12-16:</strong> stand against dealer 2-6, otherwise hit.</li>
-          <li><strong>Soft 18:</strong> S17 stands against 2; H17 doubles against 2. Both double against 3-6, stand against 7-8, and hit against 9-A.</li>
-          <li><strong>Double fallback:</strong> D/H means double if allowed, otherwise hit. D/S means double if allowed, otherwise stand.</li>
-          <li><strong>Always split:</strong> aces and 8s. Never split 5s or 10s.</li>
-        </ul>
-      </section>
+          <section class="tool-panel">
+            <h2>Fast Rules</h2>
+            <ul class="hint-list">
+              <li><strong>Ace rule:</strong> start by counting an ace as 11. If that would make the hand over 21, count that ace as 1 instead.</li>
+              <li><strong>Hard 12-16:</strong> stand against dealer 2-6, otherwise hit.</li>
+              <li><strong>Soft 18:</strong> S17 stands against 2; H17 doubles against 2. Both double against 3-6, stand against 7-8, and hit against 9-A.</li>
+              <li><strong>Double fallback:</strong> D/H means double if allowed, otherwise hit. D/S means double if allowed, otherwise stand.</li>
+              <li><strong>Always split:</strong> aces and 8s. Never split 5s or 10s.</li>
+            </ul>
+          </section>
         </aside>
-      </div>
-    </section>
 
-    <aside class="sidebar" aria-label="Strategy reference">
-      <p class="beginner-note"><strong>Ace basics:</strong> an ace can be 11 or 1. It is 11 only when the hand total stays 21 or less. A hand with an ace still counted as 11 is called soft.</p>
-      <p class="beginner-note"><strong>Casino cards vs charts:</strong> the practice hand shows the actual cards you would see at a table, including J, Q, and K. The charts use one <strong>10</strong> column because 10, J, Q, and K are all worth 10 and use the same strategy.</p>
-      <section class="chart" id="chart-hard"></section>
-      <section class="chart" id="chart-soft"></section>
-      <section class="chart" id="chart-pair"></section>
-      <div class="legend">
-        <span><i class="swatch H"></i> H hit</span>
-        <span><i class="swatch S"></i> St stand</span>
-        <span><i class="swatch D"></i> D/H double, otherwise hit</span>
-        <span><i class="swatch D"></i> D/S double, otherwise stand</span>
-        <span><i class="swatch P"></i> Sp split</span>
+        <div class="sidebar-reference">
+          <p class="beginner-note"><strong>Ace basics:</strong> an ace can be 11 or 1. It is 11 only when the hand total stays 21 or less. A hand with an ace still counted as 11 is called soft.</p>
+          <p class="beginner-note"><strong>Casino cards vs charts:</strong> the practice hand shows the actual cards you would see at a table, including J, Q, and K. The charts use one <strong>10</strong> column because 10, J, Q, and K are all worth 10 and use the same strategy.</p>
+          <section class="chart" id="chart-hard"></section>
+          <section class="chart" id="chart-soft"></section>
+          <section class="chart" id="chart-pair"></section>
+          <div class="legend">
+            <span><i class="swatch H"></i> H hit</span>
+            <span><i class="swatch S"></i> St stand</span>
+            <span><i class="swatch D"></i> D/H double, otherwise hit</span>
+            <span><i class="swatch D"></i> D/S double, otherwise stand</span>
+            <span><i class="swatch P"></i> Sp split</span>
+          </div>
+          <section class="rules-panel" aria-label="Game rules">
+            <h2>Game Rules</h2>
+            <ul class="rules-list">
+              <li><strong>Goal</strong> Beat the dealer by ending with a higher hand total than the dealer without going over 21.</li>
+              <li><strong>Card values</strong> Number cards count as shown. J, Q, and K count as 10. An ace counts as 11 unless that would put the hand over 21, then it counts as 1.</li>
+              <li><strong>Blackjack</strong> Your first two cards are an ace plus any 10-value card. This is the best starting hand.</li>
+              <li><strong>Bust</strong> If your total goes over 21, you lose immediately.</li>
+              <li><strong>Hit</strong> Take one more card. You can keep hitting until you stand or bust.</li>
+              <li><strong>Stand</strong> Stop taking cards. Your current total is the total you will compare against the dealer.</li>
+              <li><strong>Double</strong> On a two-card hand, double the bet, take exactly one more card, then your turn ends. In the charts, D/H means double if allowed, otherwise hit. D/S means double if allowed, otherwise stand.</li>
+              <li><strong>Split</strong> If your first two cards have the same value, separate them into two hands. Each card starts a new hand with its own next card.</li>
+              <li><strong>DAS</strong> Double After Split. If DAS is not allowed, some pairs are no longer worth splitting because you cannot double the new split hands.</li>
+              <li><strong>Dealer turn</strong> After players finish, the dealer draws by fixed rules. In this trainer, choose whether the dealer stands or hits on soft 17.</li>
+              <li><strong>Why strategy charts work</strong> You only need your hand type and the dealer upcard. The chart tells the best long-run play for that situation.</li>
+            </ul>
+            <p class="rules-settings"><strong>Trainer settings:</strong> 6 decks, <span id="rulesDealerText">dealer hits soft 17</span>, <span id="rulesDasText">double after split allowed</span>, surrender not included. In the charts, dealer 10 means 10, J, Q, or K.</p>
+          </section>
+        </div>
       </div>
-      <section class="rules-panel" aria-label="Game rules">
-        <h2>Game Rules</h2>
-        <ul class="rules-list">
-          <li><strong>Goal</strong> Beat the dealer by ending with a higher hand total than the dealer without going over 21.</li>
-          <li><strong>Card values</strong> Number cards count as shown. J, Q, and K count as 10. An ace counts as 11 unless that would put the hand over 21, then it counts as 1.</li>
-          <li><strong>Blackjack</strong> Your first two cards are an ace plus any 10-value card. This is the best starting hand.</li>
-          <li><strong>Bust</strong> If your total goes over 21, you lose immediately.</li>
-          <li><strong>Hit</strong> Take one more card. You can keep hitting until you stand or bust.</li>
-          <li><strong>Stand</strong> Stop taking cards. Your current total is the total you will compare against the dealer.</li>
-          <li><strong>Double</strong> On a two-card hand, double the bet, take exactly one more card, then your turn ends. In the charts, D/H means double if allowed, otherwise hit. D/S means double if allowed, otherwise stand.</li>
-          <li><strong>Split</strong> If your first two cards have the same value, separate them into two hands. Each card starts a new hand with its own next card.</li>
-          <li><strong>DAS</strong> Double After Split. If DAS is not allowed, some pairs are no longer worth splitting because you cannot double the new split hands.</li>
-          <li><strong>Dealer turn</strong> After players finish, the dealer draws by fixed rules. In this trainer, choose whether the dealer stands or hits on soft 17.</li>
-          <li><strong>Why strategy charts work</strong> You only need your hand type and the dealer upcard. The chart tells the best long-run play for that situation.</li>
-        </ul>
-        <p class="rules-settings"><strong>Trainer settings:</strong> 6 decks, <span id="rulesDealerText">dealer hits soft 17</span>, <span id="rulesDasText">double after split allowed</span>, surrender not included. In the charts, dealer 10 means 10, J, Q, or K.</p>
-      </section>
     </aside>
   </main>
 
