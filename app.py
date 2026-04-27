@@ -1,5 +1,6 @@
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import argparse
+import os
 
 
 APP_HTML = r"""<!doctype html>
@@ -1436,8 +1437,8 @@ class AppHandler(BaseHTTPRequestHandler):
 
 def main():
     parser = argparse.ArgumentParser(description="Run the Blackjack Strategy Trainer web app.")
-    parser.add_argument("--host", default="127.0.0.1", help="Host to bind. Defaults to 127.0.0.1.")
-    parser.add_argument("--port", default=8000, type=int, help="Port to bind. Defaults to 8000.")
+    parser.add_argument("--host", default=os.environ.get("HOST", "127.0.0.1"), help="Host to bind. Defaults to HOST env var or 127.0.0.1.")
+    parser.add_argument("--port", default=int(os.environ.get("PORT", "8000")), type=int, help="Port to bind. Defaults to PORT env var or 8000.")
     args = parser.parse_args()
 
     server = ThreadingHTTPServer((args.host, args.port), AppHandler)
