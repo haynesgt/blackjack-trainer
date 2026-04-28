@@ -303,7 +303,7 @@ APP_HTML = r"""<!doctype html>
 
     .actions {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 10px;
     }
 
@@ -887,6 +887,7 @@ APP_HTML = r"""<!doctype html>
               <button class="action" data-action="S">Stand [2]</button>
               <button class="action" data-action="D">Double [3]</button>
               <button class="action" data-action="P">Split [4]</button>
+              <button class="action" data-action="U">I don’t know [5]</button>
             </div>
             <div class="result" id="result" aria-live="polite">
               <strong>Last hand feedback appears here.</strong>
@@ -944,6 +945,7 @@ APP_HTML = r"""<!doctype html>
               <li><strong>2 Stand:</strong> stop taking cards and keep this total.</li>
               <li><strong>3 Double:</strong> on a two-card hand, double the bet, take exactly one more card, then stop.</li>
               <li><strong>4 Split:</strong> if your first two cards have the same value, separate them into two hands.</li>
+              <li><strong>5 I don’t know:</strong> reveal the answer and count it as a miss.</li>
             </ul>
           </section>
 
@@ -1115,7 +1117,8 @@ APP_HTML = r"""<!doctype html>
         H: true,
         S: true,
         D: canDouble(cards),
-        P: canSplit(cards)
+        P: canSplit(cards),
+        U: true
       };
     }
 
@@ -1143,7 +1146,7 @@ APP_HTML = r"""<!doctype html>
     }
 
     function actionName(move) {
-      return { H: "Hit", S: "Stand", D: "Double", P: "Split" }[move] || "Unknown";
+      return { H: "Hit", S: "Stand", D: "Double", P: "Split", U: "I don’t know" }[move] || "Unknown";
     }
 
     function chartMoveLabel(kind, row, dealer, move) {
@@ -1404,7 +1407,7 @@ APP_HTML = r"""<!doctype html>
       const correct = bestMove(state.hand.player, state.hand.dealer);
       const detail = describe(state.hand.player, state.hand.dealer, correct);
       state.answered = true;
-      if (move === correct) {
+      if (move === correct && move !== "U") {
         state.stats.correct += 1;
         state.stats.streak += 1;
         state.history.push(1);
@@ -1417,7 +1420,10 @@ APP_HTML = r"""<!doctype html>
           dealer: state.hand.dealer,
           player: state.hand.player.map(card => ({ value: card.value }))
         });
-        setFeedback("bad", `Best play: ${actionName(correct)}.`, `You chose ${actionName(move)}. ${detail}`);
+        const missDetail = move === "U"
+          ? `You marked this as unknown. ${detail}`
+          : `You chose ${actionName(move)}. ${detail}`;
+        setFeedback("bad", `Best play: ${actionName(correct)}.`, missDetail);
       }
       save();
       updateScore();
@@ -1492,7 +1498,7 @@ APP_HTML = r"""<!doctype html>
         nextHand();
       });
       window.addEventListener("keydown", event => {
-        const keyMap = { h: "H", "1": "H", s: "S", "2": "S", d: "D", "3": "D", p: "P", "4": "P" };
+        const keyMap = { h: "H", "1": "H", s: "S", "2": "S", d: "D", "3": "D", p: "P", "4": "P", u: "U", "?": "U", "5": "U" };
         const move = keyMap[event.key.toLowerCase()];
         if (move) {
           event.preventDefault();

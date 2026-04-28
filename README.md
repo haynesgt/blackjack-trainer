@@ -24,6 +24,7 @@ Player actions:
 - Stand: stop taking cards and keep your current total. Shortcut: `2` or `S`.
 - Double: on a two-card hand, double the bet, take exactly one more card, then stop. If a chart play is Double but the hand has more than two cards, hit instead. Shortcut: `3` or `D`.
 - Split: if your first two cards have the same value, separate them into two hands. Shortcut: `4` or `P`.
+- I don't know: reveal the answer and count it as a miss. Shortcut: `5`, `U`, or `?`.
 
 DAS means Double After Split. If DAS is not allowed, some pairs are no longer worth splitting because you cannot double the new split hands.
 
