@@ -37,6 +37,8 @@ DAS means Double After Split. If DAS is not allowed, some pairs are no longer wo
 
 Hard, soft, and mixed drills can include 3+ card decision scenarios like you might see after hitting in a real hand. In those later decisions, Double and Split are not available.
 
+The progress graph tracks the last 100 answers and displays an exponential weighted accuracy line, so recent answers affect the line more than older answers.
+
 ## Ace rule
 
 An ace can count as 11 or 1. Start by counting it as 11. If that would make the hand total more than 21, count the ace as 1 instead. A "soft" hand has an ace still counted as 11; a "hard" hand does not.

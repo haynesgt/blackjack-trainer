@@ -109,6 +109,13 @@ APP_HTML = r"""<!doctype html>
       gap: 8px;
     }
 
+    .progress-wrap {
+      display: grid;
+      grid-template-columns: auto minmax(220px, 330px);
+      gap: 8px;
+      align-items: stretch;
+    }
+
     .score div {
       border: 1px solid rgba(255,255,255,0.22);
       background: rgba(255,255,255,0.12);
@@ -129,6 +136,52 @@ APP_HTML = r"""<!doctype html>
       margin-top: 4px;
       color: rgba(255,255,255,0.72);
       font-size: 12px;
+    }
+
+    .progress-card {
+      border: 1px solid rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 8px;
+      min-height: 60px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 4px;
+    }
+
+    .progress-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      color: rgba(255,255,255,0.72);
+      font-size: 12px;
+      line-height: 1.1;
+    }
+
+    .progress-head strong {
+      color: #fff;
+      font-size: 13px;
+    }
+
+    .progress-chart {
+      width: 100%;
+      height: 38px;
+      overflow: visible;
+    }
+
+    .progress-grid {
+      stroke: rgba(255,255,255,0.16);
+      stroke-width: 1;
+    }
+
+    .progress-line {
+      fill: none;
+      stroke: #ffd166;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.24));
     }
 
     .felt-layout {
@@ -660,6 +713,11 @@ APP_HTML = r"""<!doctype html>
         grid-template-columns: repeat(3, minmax(0, 1fr));
       }
 
+      .progress-wrap {
+        width: 100%;
+        grid-template-columns: 1fr;
+      }
+
       .side-tools {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
@@ -677,6 +735,10 @@ APP_HTML = r"""<!doctype html>
 
       .score {
         grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .progress-wrap {
+        grid-template-columns: 1fr;
       }
 
       .practice {
@@ -785,10 +847,20 @@ APP_HTML = r"""<!doctype html>
           <h1>Blackjack Strategy Trainer</h1>
           <p class="subtitle">Practice total-dependent basic strategy for a 6-deck game with configurable soft-17 dealer rules. Double after split is allowed; surrender is excluded.</p>
         </div>
-        <div class="score" aria-label="Session score">
-          <div><strong id="correct">0</strong><span>Correct</span></div>
-          <div><strong id="missed">0</strong><span>Missed</span></div>
-          <div><strong id="streak">0</strong><span>Streak</span></div>
+        <div class="progress-wrap">
+          <div class="score" aria-label="Session score">
+            <div><strong id="correct">0</strong><span>Correct</span></div>
+            <div><strong id="missed">0</strong><span>Missed</span></div>
+            <div><strong id="streak">0</strong><span>Streak</span></div>
+          </div>
+          <div class="progress-card" aria-label="Weighted accuracy over last 100 answers">
+            <div class="progress-head"><strong>Progress</strong><span id="progressLabel">No answers yet</span></div>
+            <svg class="progress-chart" viewBox="0 0 300 38" preserveAspectRatio="none" role="img" aria-labelledby="progressTitle">
+              <title id="progressTitle">Exponential weighted accuracy over the last 100 answers</title>
+              <line class="progress-grid" x1="0" y1="19" x2="300" y2="19"></line>
+              <polyline class="progress-line" id="progressLine" points=""></polyline>
+            </svg>
+          </div>
         </div>
       </div>
 
@@ -939,7 +1011,8 @@ APP_HTML = r"""<!doctype html>
       hand: null,
       answered: false,
       stats: JSON.parse(localStorage.getItem("blackjackTrainerStats") || '{"correct":0,"missed":0,"streak":0}'),
-      misses: JSON.parse(localStorage.getItem("blackjackTrainerMisses") || "[]")
+      misses: JSON.parse(localStorage.getItem("blackjackTrainerMisses") || "[]"),
+      history: JSON.parse(localStorage.getItem("blackjackTrainerHistory") || "[]")
     };
 
     function label(value) {
@@ -1255,12 +1328,44 @@ APP_HTML = r"""<!doctype html>
     function save() {
       localStorage.setItem("blackjackTrainerStats", JSON.stringify(state.stats));
       localStorage.setItem("blackjackTrainerMisses", JSON.stringify(state.misses.slice(-30)));
+      localStorage.setItem("blackjackTrainerHistory", JSON.stringify(state.history.slice(-100)));
     }
 
     function updateScore() {
       document.getElementById("correct").textContent = state.stats.correct;
       document.getElementById("missed").textContent = state.stats.missed;
       document.getElementById("streak").textContent = state.stats.streak;
+      renderProgress();
+    }
+
+    function weightedAccuracySeries(results) {
+      let average = results[0] ?? 0;
+      const alpha = 0.16;
+      return results.map(result => {
+        average = alpha * result + (1 - alpha) * average;
+        return average;
+      });
+    }
+
+    function renderProgress() {
+      const history = state.history.slice(-100);
+      const line = document.getElementById("progressLine");
+      const label = document.getElementById("progressLabel");
+      if (!history.length) {
+        line.setAttribute("points", "");
+        label.textContent = "No answers yet";
+        return;
+      }
+      const series = weightedAccuracySeries(history);
+      const width = 300;
+      const height = 38;
+      const points = series.map((value, index) => {
+        const x = series.length === 1 ? width : (index / (series.length - 1)) * width;
+        const y = height - value * height;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      }).join(" ");
+      line.setAttribute("points", points);
+      label.textContent = `${Math.round(series[series.length - 1] * 100)}% EW over ${history.length}`;
     }
 
     function updateModeButtons() {
@@ -1302,10 +1407,12 @@ APP_HTML = r"""<!doctype html>
       if (move === correct) {
         state.stats.correct += 1;
         state.stats.streak += 1;
+        state.history.push(1);
         setFeedback("good", "Correct.", detail);
       } else {
         state.stats.missed += 1;
         state.stats.streak = 0;
+        state.history.push(0);
         state.misses.push({
           dealer: state.hand.dealer,
           player: state.hand.player.map(card => ({ value: card.value }))
@@ -1357,6 +1464,7 @@ APP_HTML = r"""<!doctype html>
       document.getElementById("reset").addEventListener("click", () => {
         state.stats = { correct: 0, missed: 0, streak: 0 };
         state.misses = [];
+        state.history = [];
         save();
         updateScore();
         nextHand();
